@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>WEBOX iframe 沙箱 MVP 验证台</title>
+  <style>
+    :root {
+      --primary-color: #2563eb;
+      --bg-color: #0f172a;
+      --text-color: #1e293b;
+      --border-radius: 8px;
+    }
+
+    /* 故意在宿主定义冲突样式，验证 ShadowDOM 样式隔离 */
+    .btn {
+      background: #dc2626 !important;
+      color: #fff;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+    }
+
+    header.host-bar {
+      background: #0f172a;
+      color: #f8fafc;
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    header.host-bar h1 {
+      margin: 0;
+      font-size: 16px;
+    }
+
+    .host-controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .host-btn {
+      padding: 6px 12px;
+      border: 1px solid #334155;
+      background: #1e293b;
+      color: #f8fafc;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+
+    .host-btn.primary {
+      background: #2563eb;
+      border-color: #2563eb;
+    }
+
+    .host-btn:hover {
+      opacity: 0.9;
+    }
+
+    .top-panel {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 12px;
+      padding: 12px 20px 0;
+    }
+
+    .panel-card {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      padding: 12px;
+    }
+
+    .panel-card h2 {
+      margin: 0 0 8px;
+      font-size: 14px;
+      color: #0f172a;
+    }
+
+    .mono {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      background: #f8fafc;
+      padding: 8px;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      line-height: 1.5;
+    }
+
+    .check-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 6px;
+      font-size: 12px;
+    }
+
+    .check-item {
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+    }
+
+    .check-item.pass {
+      background: #f0fdf4;
+      border-color: #86efac;
+      color: #166534;
+    }
+
+    .check-item.fail {
+      background: #fef2f2;
+      border-color: #fca5a5;
+      color: #991b1b;
+    }
+
+    .apps-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      padding: 12px 20px 20px;
+    }
+
+    .app-slot-wrapper {
+      background: #fff;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 620px;
+    }
+
+    .slot-title {
+      padding: 8px 12px;
+      background: #e2e8f0;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .app-mount-target {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+  </style>
+</head>
+<body>
+  <header class="host-bar">
+    <h1>WEBOX iframe 沙箱 MVP 验证台（对标 wujie 修正版）</h1>
+    <div class="host-controls">
+      <button id="btn-run-checks" class="host-btn primary">一键运行全量验收</button>
+      <button id="btn-host-broadcast" class="host-btn">宿主 Broadcast 广播</button>
+      <button id="btn-remount-react" class="host-btn">卸载并重装 React 子应用</button>
+      <button id="btn-refresh-host-state" class="host-btn">刷新宿主 Window 状态</button>
+    </div>
+  </header>
+
+  <section class="top-panel">
+    <div class="panel-card">
+      <h2>宿主 Window &amp; Storage 状态（应零污染）</h2>
+      <div id="host-state" class="mono">初始化中...</div>
+    </div>
+    <div class="panel-card">
+      <h2>自动化验收矩阵（点击「一键运行全量验收」）</h2>
+      <div id="check-results" class="check-list">
+        <div class="check-item">等待子应用加载完成...</div>
+      </div>
+    </div>
+  </section>
+
+  <main class="apps-grid">
+    <div class="app-slot-wrapper">
+      <div class="slot-title">
+        <span>子应用 A：react-app（React SPA 模拟）</span>
+        <span id="react-route-badge">sandboxMode: iframe</span>
+      </div>
+      <div id="slot-react" class="app-mount-target"></div>
+    </div>
+
+    <div class="app-slot-wrapper">
+      <div class="slot-title">
+        <span>子应用 B：jquery-mpa（jQuery MPA 模拟）</span>
+        <span id="jquery-route-badge">sandboxMode: iframe</span>
+      </div>
+      <div id="slot-jquery" class="app-mount-target"></div>
+    </div>
+  </main>
+
+  <script type="module" src="/demo/host.js"></script>
+</body>
+</html>

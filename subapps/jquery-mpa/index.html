@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>jQuery MPA 子应用（首页）</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="jq-app">
+    <div class="jq-header">
+      <h2>jQuery MPA 子应用 — 列表页</h2>
+      <span class="tag">传统多页 / 内联脚本 / XHR</span>
+    </div>
+
+    <div class="jq-card">
+      <h3>1. 同名 Window 变量隔离测试</h3>
+      <div id="jq-win-info" class="mono">初始化中...</div>
+      <div class="actions">
+        <button id="jq-btn-toggle" class="jq-btn">修改 window.__GLOBAL_TOKEN__</button>
+        <a href="./detail.html" class="jq-link">跳转详情页 (./detail.html MPA 拦截测试) →</a>
+      </div>
+    </div>
+
+    <div class="jq-card">
+      <h3>2. XMLHttpRequest 拦截 (根路径 + roarand) &amp; 跨应用通信</h3>
+      <div class="actions">
+        <button id="jq-btn-xhr-get" class="jq-btn">XHR GET /api/items</button>
+        <button id="jq-btn-xhr-post" class="jq-btn">XHR POST /api/submit [roarand]</button>
+        <button id="jq-btn-broadcast" class="jq-btn">Broadcast 给 React 子应用</button>
+      </div>
+      <div id="jq-log" class="mono">等待操作...</div>
+    </div>
+  </div>
+
+  <!-- 内联脚本 1：模拟 jQuery 挂载到 window.$ 并写入同名全局变量 -->
+  <script>
+    window.__GLOBAL_TOKEN__ = 'JQUERY_MPA_TOKEN_999';
+    window.APP_NAME = 'JQUERY_MPA';
+    window.jqPage = 'index.html';
+    window.$ = function (sel) {
+      return document.querySelector(sel);
+    };
+    window.localStorage.setItem('demo_key', 'JQUERY_STORAGE_VALUE');
+  </script>
+
+  <!-- 内联脚本 2：验证顺序执行与 DOMContentLoaded -->
+  <script>
+    (function () {
+      function log(msg) {
+        var el = window.$('#jq-log');
+        if (!el) return;
+        var prefix = '[' + new Date().toLocaleTimeString() + '] ';
+        el.textContent = prefix + msg + '\n' + (el.textContent === '等待操作...' ? '' : el.textContent);
+      }
+
+      function renderWinInfo() {
+        var el = window.$('#jq-win-info');
+        if (!el) return;
+        el.textContent = [
+          'window.__GLOBAL_TOKEN__ = ' + JSON.stringify(window.__GLOBAL_TOKEN__),
+          'window.APP_NAME         = ' + JSON.stringify(window.APP_NAME),
+          'typeof window.$         = ' + typeof window.$,
+          'window.reactAppCounter  = ' + String(window.reactAppCounter) + '  (React 子应用变量，应为 undefined)',
+          'window.sharedCounter    = ' + String(window.sharedCounter) + '  (宿主变量，应为 undefined)',
+          'localStorage.demo_key   = ' + JSON.stringify(window.localStorage.getItem('demo_key')),
+          'DOMContentLoaded fired  = ' + Boolean(window.__JQ_DCL_FIRED__),
+        ].join('\n');
+      }
+
+      document.addEventListener('DOMContentLoaded', function () {
+        window.__JQ_DCL_FIRED__ = true;
+        renderWinInfo();
+      });
+
+      window.$('#jq-btn-toggle').addEventListener('click', function () {
+        window.__GLOBAL_TOKEN__ = 'JQUERY_MUTATED_' + Math.floor(Math.random() * 1000);
+        renderWinInfo();
+      });
+
+      window.$('#jq-btn-xhr-get').addEventListener('click', function () {
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', '/api/items');
+        xhr.onload = function () {
+          window.__LAST_XHR_GET__ = JSON.parse(xhr.responseText);
+          log('XHR GET /api/items 成功 → ' + xhr.responseText);
+        };
+        xhr.send();
+      });
+
+      window.$('#jq-btn-xhr-post').addEventListener('click', function () {
+        var xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/submit');
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.onload = function () {
+          window.__LAST_XHR_POST__ = JSON.parse(xhr.responseText);
+          log('XHR POST /api/submit (roarand) 成功 → ' + xhr.responseText);
+        };
+        xhr.send(JSON.stringify({ from: 'jquery-mpa', token: window.__GLOBAL_TOKEN__ }));
+      });
+
+      window.$('#jq-btn-broadcast').addEventListener('click', function () {
+        if (window.webox) {
+          window.webox.broadcast('ping', { text: 'Hello from jQuery MPA!' });
+          log('已广播 topic="ping"');
+        }
+      });
+
+      if (window.webox && !window.__JQ_SUBSCRIBED__) {
+        window.__JQ_SUBSCRIBED__ = true;
+        window.webox.subscribe('ping', function (msg, sender) {
+          window.__LAST_RECEIVED_MSG__ = { msg: msg, sender: sender };
+          log('收到来自 [' + sender + '] 的广播: ' + JSON.stringify(msg));
+        });
+      }
+
+      renderWinInfo();
+    })();
+  </script>
+</body>
+</html>

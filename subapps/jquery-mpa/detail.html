@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>jQuery MPA 子应用（详情页）</title>
+  <link rel="stylesheet" href="./style.css" />
+</head>
+<body>
+  <div id="jq-app">
+    <div class="jq-header">
+      <h2>jQuery MPA 子应用 — 详情页 (detail.html)</h2>
+      <span class="tag">MPA 子应用内跳转成功</span>
+    </div>
+
+    <div class="jq-card">
+      <h3>已停留在宿主页面内完成 MPA 切页</h3>
+      <div id="detail-info" class="mono"></div>
+      <div class="actions">
+        <a href="./index.html" class="jq-link">← 返回列表页 (./index.html)</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window.jqPage = 'detail.html';
+    document.getElementById('detail-info').textContent = [
+      '当前 iframe location.pathname = ' + window.location.pathname,
+      'window.__GLOBAL_TOKEN__       = ' + JSON.stringify(window.__GLOBAL_TOKEN__),
+      'window.APP_NAME               = ' + JSON.stringify(window.APP_NAME),
+      '宿主页面未发生整页刷新，且地址栏 ?jquery-mpa=... 已同步更新！',
+    ].join('\n');
+  </script>
+</body>
+</html>

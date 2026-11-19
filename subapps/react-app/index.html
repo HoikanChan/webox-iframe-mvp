@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>React SPA 子应用（模拟）</title>
+  <link rel="stylesheet" href="/app.css" />
+</head>
+<body>
+  <div id="react-root">
+    <div class="app-header">
+      <img src="/badge.svg" alt="React Badge" class="logo" />
+      <div>
+        <h2>React SPA 子应用 <span class="badge-icon"></span></h2>
+        <p class="subtitle">验证 window 变量隔离 / 原生 API / Webpack 动态 chunk / SPA 路由同步 / SAML &amp; roarand</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>1. Window 变量与原生 API</h3>
+      <div id="win-status" class="mono-box">加载中...</div>
+      <div class="btn-row">
+        <button id="btn-inc-win" class="btn">window.reactAppCounter + 1</button>
+        <button id="btn-load-chunk" class="btn">加载动态 Chunk (document.head.appendChild)</button>
+        <button id="btn-portal" class="btn">打开 Portal 弹窗 (document.body.appendChild)</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>2. SPA 路由（同步到宿主 URL Query，刷新可恢复）</h3>
+      <div class="btn-row">
+        <button class="btn route-btn" data-route="/febs-proxy/react-app/view/home">首页 (/view/home)</button>
+        <button class="btn route-btn" data-route="/febs-proxy/react-app/view/orders">订单 (/view/orders)</button>
+        <button class="btn route-btn" data-route="/febs-proxy/react-app/view/settings">设置 (/view/settings)</button>
+      </div>
+      <div id="route-view" class="mono-box"></div>
+    </div>
+
+    <div class="card">
+      <h3>3. 跨域代理 / SAML 302 / roarand / Storage / 通信</h3>
+      <div class="btn-row">
+        <button id="btn-fetch-root" class="btn">fetch('/api/data')</button>
+        <button id="btn-fetch-saml" class="btn">fetch('./api/saml-protected') [302+Cookie]</button>
+        <button id="btn-post-roarand" class="btn">POST /api/submit [roarand]</button>
+        <button id="btn-broadcast" class="btn">Broadcast 给宿主和 jQuery 子应用</button>
+      </div>
+      <div id="net-status" class="mono-box">等待请求...</div>
+    </div>
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
